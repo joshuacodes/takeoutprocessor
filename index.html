@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Google Chat JSON Reader</title>
+		<meta charset="UTF-8" />
+
+		<!-- Styles -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+		<style type="text/css">
+		.btn-file {
+			position: relative;
+			overflow: hidden;
+		}
+		.btn-file input[type=file] {
+			position: absolute;
+			top: 0;
+			right: 0;
+			min-width: 100%;
+			min-height: 100%;
+			font-size: 100px;
+			text-align: right;
+			filter: alpha(opacity=0);
+			opacity: 0;
+			outline: none;
+			background: white;
+			cursor: inherit;
+			display: block;
+		}
+		.main-row{
+			margin-top: 40px;
+		}
+		.thumb{
+			width:100px;
+			height: auto;
+		}
+		.txt{
+			border-radius: 20px;
+			padding: 14px;
+			margin-bottom: 10px;
+		}
+		h3{
+			margin-top: 0;
+		}
+		</style>
+	</head>
+	<body>
+
+		<div class="container-fluid main">
+			<h1 style="display: inline;">Google Chat JSON Reader</h1>
+
+			<form class="form-inline" style="display: inline; margin-left: 20px;">
+				Select your directory:
+				<div class="input-group">
+					<span class="input-group-btn">
+						<span class="btn btn-primary btn-file">
+							Browse&hellip; <input id="file-upload" type="file" webkitdirectory directory multiple>
+						</span>
+					</span>
+					<input type="text" class="form-control file-name" readonly>
+				</div>
+			</form>
+			<div id="group-members"></div>
+			<div class="row main-row">
+				<div class="col-md-9">
+					<div id="messages-area">
+					
+					</div>
+				</div>
+			</div>
+		</div>
+
+	</body>
+	<script type="text/javascript" src="https://code.jquery.com/jquery-1.11.0.min.js"></script>
+	<script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+	<script type="text/javascript">
+
+	var colors = {};
+
+	$(document).on('change', '.btn-file :file', function() {
+		var input    = $(this),
+			numFiles = input.get(0).files ? input.get(0).files.length : 1,
+			label    = input.val().replace(/\\/g, '/').replace(/.*\//, '');
+		input.trigger('fileselect', [numFiles, label]);
+	});
+
+	$('.btn-file :file').on('fileselect', function(event, numFiles, label) {
+		$('.file-name').val(label);
+
+		// Process files
+		var files = document.getElementById("file-upload").files;
+		for(var i=0; i<files.length; i++) {
+			if (files[i].name === "messages.json" || files[i].name === "group_info.json") {
+				var reader = new FileReader();
+				reader.onload = (function(file) {
+					if (file.name === "messages.json") {
+						return function(e) { processMessages(e.target.result); };
+					} else if (file.name === "group_info.json") {
+						return function(e) { processGroupInfo(e.target.result); };
+					}
+				})(files[i]);
+				reader.readAsText(files[i]);
+			}
+		}
+	});
+
+	function processMessages(jsonData) {
+		var chatData = JSON.parse(jsonData);
+		for(let message of chatData.messages){
+			var color = colors[message.creator.email];
+			var div = $("<div></div>")
+				.addClass("txt")
+				.css('background-color', color)
+				.text(message.created_date + ": " + message.creator.name + ": " + message.text);
+			$("#messages-area").append(div);
+		}
+	}
+
+	function processGroupInfo(jsonData) {
+		var groupInfo = JSON.parse(jsonData);
+		var members = groupInfo.members;
+		var colorIncrement = Math.floor(360 / members.length); // Divide color wheel into equal segments based on member count
+		for(var i=0; i<members.length; i++){
+			var color = 'hsl(' + (i * colorIncrement) + ', 100%, 75%)'; // Generate color in HSL
+			colors[members[i].email] = color;
+			$("#group-members").append("<p style='color: "+color+";'>" + members[i].name + " (" + members[i].email + ")</p>");
+		}
+	}
+
+	</script>
+</html>
