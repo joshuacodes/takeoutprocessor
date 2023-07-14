@@ -103,17 +103,37 @@
 		}
 	});
 
-	function processMessages(jsonData) {
-		var chatData = JSON.parse(jsonData);
-		for(let message of chatData.messages){
-			var color = colors[message.creator.email];
-			var div = $("<div></div>")
-				.addClass("txt")
-				.css('background-color', color)
-				.text(message.created_date + ": " + message.creator.name + ": " + message.text);
-			$("#messages-area").append(div);
+//	function processMessages(jsonData) {
+//		var chatData = JSON.parse(jsonData);
+//		for(let message of chatData.messages){
+//			var color = colors[message.creator.email];
+//			var div = $("<div></div>")
+//				.addClass("txt")
+//				.css('background-color', color)
+//				.text(message.created_date + ": " + message.creator.name + ": " + message.text);
+//			$("#messages-area").append(div);
+//		}
+//	}
+  function processMessages(jsonData) {
+    var chatData = JSON.parse(jsonData);
+    for(let message of chatData.messages){
+		var color = colors[message.creator.email];
+		var div = $("<div></div>")
+			.addClass("txt")
+			.css('background-color', color)
+			.text(message.created_date + ": " + message.creator.name + ": " + message.text);
+		if (message.attached_files) {
+			for (let file of message.attached_files) {
+				if (file.export_name.toLowerCase().endsWith(".jpg") || file.export_name.toLowerCase().endsWith(".png") || file.export_name.toLowerCase().endsWith(".gif")) {
+					div.append("<br/><img class='thumb' src='" + file.export_name + "' alt='Image'/>");
+				} else {
+					div.append("<br/><a href='" + file.export_name + "' download>" + file.export_name + "</a>");
+				}
+			}
 		}
+		$("#messages-area").append(div);
 	}
+}
 
 	function processGroupInfo(jsonData) {
 		var groupInfo = JSON.parse(jsonData);
